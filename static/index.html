@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Bowling Score Calculator</title>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f0f0f0;
+            }
+            .container {
+                background-color: white;
+                border-radius: 10px;
+                padding: 30px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+            h1 {
+                text-align: center;
+                color: #333;
+                margin-bottom: 30px;
+            }
+            .player-selection {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            .player-selection label {
+                font-weight: bold;
+                margin-right: 10px;
+            }
+            .player-selection input {
+                padding: 5px 10px;
+                font-size: 16px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            .scorecard {
+                border: 2px solid #333;
+                border-radius: 5px;
+                overflow: hidden;
+                margin-bottom: 10px;
+            }
+            .frame-row {
+                display: flex;
+                background-color: #fff;
+            }
+            .frame {
+                border-right: 1px solid #333;
+                flex: 1;
+                position: relative;
+            }
+            .frame:last-child {
+                border-right: none;
+                flex: 1.5;
+            }
+            .frame-header {
+                background-color: #e0e0e0;
+                text-align: center;
+                padding: 5px;
+                font-weight: bold;
+                border-bottom: 1px solid #333;
+            }
+            .throws {
+                display: flex;
+                height: 60px;
+            }
+            .throw {
+                flex: 1;
+                border-right: 1px solid #333;
+                position: relative;
+            }
+            .throw:last-child {
+                border-right: none;
+            }
+            .throw input {
+                width: 100%;
+                height: 100%;
+                border: none;
+                text-align: center;
+                font-size: 16px;
+                font-weight: bold;
+                background-color: transparent;
+            }
+            .throw input:focus {
+                background-color: #fff3cd;
+                outline: 2px solid #ffc107;
+            }
+            .score-row {
+                display: flex;
+                background-color: #f8f9fa;
+            }
+            .frame-score {
+                border-top: 1px solid #333;
+                border-right: 1px solid #333;
+                flex: 1;
+                text-align: center;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                font-weight: bold;
+                font-size: 18px;
+                background-color: #e9ecef;
+            }
+            .frame-score:last-child {
+                border-right: none;
+                flex: 1.5;
+            }
+            .tenth-frame .throws {
+                display: flex;
+            }
+            .tenth-frame .throw {
+                flex: 1;
+            }
+            .total-score {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 24px;
+                font-weight: bold;
+                color: #007bff;
+            }
+            .buttons {
+                text-align: center;
+                margin: 20px 0;
+            }
+            button {
+                padding: 10px 20px;
+                margin: 0 10px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            button.danger {
+                background-color: #dc3545;
+            }
+            button.danger:hover {
+                background-color: #c82333;
+            }
+            .instructions {
+                margin-top: 30px;
+                padding: 20px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                border-left: 4px solid #007bff;
+            }
+            .instructions h3 {
+                margin-top: 0;
+                color: #007bff;
+            }
+            .instructions ul {
+                margin-bottom: 0;
+            }
+            .error {
+                color: #dc3545;
+                background-color: #f8d7da;
+            }
+            .strike {
+                background-color: #d4edda;
+            }
+            .spare {
+                background-color: #fff3cd;
+            }
+            .scores-list {
+                margin-top: 30px;
+                padding: 20px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+            }
+            .scores-list h3 {
+                margin-top: 0;
+                color: #333;
+            }
+            .score-item {
+                padding: 10px;
+                margin: 10px 0;
+                background-color: white;
+                border-radius: 5px;
+                border: 1px solid #ddd;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .score-info {
+                flex: 1;
+            }
+            .score-actions {
+                flex-shrink: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🎳 Bowling Score Calculator</h1>
+        <div id="seriesContainer"></div>
+        <div class="buttons">
+            <button id="addSeries">Add New Series</button>
+            <button id="loadScores">Load Saved Scores</button>
+        </div>
+        <div class="scores-list" id="scoresList" style="display: none">
+            <h3>Saved Scores</h3>
+            <div id="scoresContainer"></div>
+        </div>
+        <div class="instructions">
+            <h3>How to Use:</h3>
+            <ul>
+                <li>
+                    <strong>Enter pins knocked down:</strong> Type numbers 0-10
+                    for each throw
+                </li>
+                <li>
+                    <strong>Strike:</strong> Enter "X" or "10" in the first
+                    throw of a frame
+                </li>
+                <li>
+                    <strong>Spare:</strong> Enter "/" in the second throw when
+                    total pins = 10
+                </li>
+                <li><strong>Gutter ball:</strong> Enter "0" or "-"</li>
+                <li>
+                    <strong>Save Score:</strong> Click "Save Score" to store
+                    each series in the database separately
+                </li>
+                <li>
+                    <strong>Load Scores:</strong> Click "Load Saved Scores" to
+                    view all stored games
+                </li>
+                <li>
+                    <strong>Delete Score:</strong> Delete scores directly from
+                    the list
+                </li>
+            </ul>
+        </div>
+
+        <script>
+            class BowlingSeries {
+                constructor(id) {
+                    this.id = id;
+                    this.frames = Array(10)
+                        .fill()
+                        .map(() => ({ throws: [], score: 0 }));
+                    this.playerId = `Player${id}`;
+                    this.createSeriesElement();
+                }
+
+                createSeriesElement() {
+                    const container = document.createElement("div");
+                    container.className = "container";
+                    container.id = this.id;
+                    container.dataset.seriesId = this.id;
+
+                    container.innerHTML = `
+                    <div class="player-selection">
+                        <label>Player ID:</label>
+                        <input type="text" value="${this.playerId}" data-player-id>
+                    </div>
+                    <div class="scorecard">
+                        <div class="frame-row">
+                            ${this.createFrameHeaders()}
+                        </div>
+                        <div class="frame-row">
+                            ${this.createThrowInputs()}
+                        </div>
+                        <div class="frame-row">
+                            ${this.createScoreDisplays()}
+                        </div>
+                    </div>
+                    <div class="total-score">
+                        Total Score: <span data-total-score>0</span>
+                    </div>
+                    <div class="buttons">
+                        <button onclick="BowlingSeries.saveScore(${this.id})">Save Score</button>
+                        <button onclick="document.getElementById(${this.id}).remove()">Remove Score</button>
+                    </div>
+                `;
+
+                    document
+                        .getElementById("seriesContainer")
+                        .appendChild(container);
+                    this.addEventListeners(container);
+                }
+
+                createFrameHeaders() {
+                    return Array.from(
+                        { length: 10 },
+                        (_, i) => `
+                    <div class="frame"><div class="frame-header">${i + 1}</div></div>`,
+                    ).join("");
+                }
+
+                createThrowInputs() {
+                    return Array.from({ length: 10 }, (_, i) => {
+                        if (i < 9) {
+                            return `
+                            <div class="frame" data-frame="${i + 1}">
+                                <div class="throws">
+                                    <div class="throw"><input type="text" maxlength="2" data-frame="${i + 1}" data-throw="1"></div>
+                                    <div class="throw"><input type="text" maxlength="2" data-frame="${i + 1}" data-throw="2"></div>
+                                </div>
+                            </div>`;
+                        } else {
+                            return `
+                            <div class="frame tenth-frame" data-frame="10">
+                                <div class="throws">
+                                    <div class="throw"><input type="text" maxlength="2" data-frame="10" data-throw="1"></div>
+                                    <div class="throw"><input type="text" maxlength="2" data-frame="10" data-throw="2"></div>
+                                    <div class="throw"><input type="text" maxlength="2" data-frame="10" data-throw="3"></div>
+                                </div>
+                            </div>`;
+                        }
+                    }).join("");
+                }
+
+                createScoreDisplays() {
+                    return Array.from(
+                        { length: 10 },
+                        (_, i) => `
+                    <div class="frame-score" data-score="${i + 1}">0</div>`,
+                    ).join("");
+                }
+
+                addEventListeners(container) {
+                    const inputs =
+                        container.querySelectorAll("input[data-frame]");
+                    inputs.forEach((input) => {
+                        input.addEventListener("input", (e) =>
+                            this.handleInput(e),
+                        );
+                        input.addEventListener("blur", (e) =>
+                            this.validateInput(e),
+                        );
+                    });
+                }
+
+                handleInput(event) {
+                    const input = event.target;
+                    const frame = parseInt(input.dataset.frame) - 1;
+                    const throwIndex = parseInt(input.dataset.throw) - 1;
+
+                    let value = input.value.toUpperCase().trim();
+
+                    // Handle special characters
+                    if (value === "X") value = "10";
+                    if (value === "-") value = "0";
+
+                    this.frames[frame].throws[throwIndex] = value;
+                    this.calculateScores();
+                    this.updateDisplay();
+                }
+
+                validateInput(event) {
+                    const input = event.target;
+                    const frame = parseInt(input.dataset.frame) - 1;
+                    const throwIndex = parseInt(input.dataset.throw) - 1;
+                    const value = input.value.toUpperCase().trim();
+
+                    // Clear invalid input
+                    if (value && !this.isValidInput(value, frame, throwIndex)) {
+                        input.value = "";
+                        this.frames[frame].throws[throwIndex] = "";
+                        this.calculateScores();
+                        this.updateDisplay();
+                        input.classList.add("error");
+                        setTimeout(() => input.classList.remove("error"), 1000);
+                    }
+                }
+
+                isValidInput(value, frame, throwIndex) {
+                    if (value === "") return true;
+                    if (value === "X" || value === "10") return true;
+                    if (value === "/" && throwIndex > 0) return true;
+                    if (value === "-" || value === "0") return true;
+
+                    const num = parseInt(value);
+                    if (isNaN(num) || num < 0 || num > 10) return false;
+
+                    // Check if total pins in frame doesn't exceed 10 (except 10th frame)
+                    if (frame < 9 && throwIndex === 1) {
+                        const firstThrow = this.parseThrow(
+                            this.frames[frame].throws[0] || "0",
+                        );
+                        if (firstThrow < 10 && firstThrow + num > 10)
+                            return false;
+                    }
+
+                    return true;
+                }
+
+                parseThrow(value) {
+                    if (!value || value === "-") return 0;
+                    if (value === "X") return 10;
+                    if (value === "/") return "/";
+                    return parseInt(value) || 0;
+                }
+
+                calculateScores() {
+                    let runningScore = 0;
+
+                    for (let frame = 0; frame < 10; frame++) {
+                        const frameScore = this.calculateFrameScore(frame);
+                        runningScore += frameScore;
+                        this.frames[frame].score = runningScore;
+                    }
+                }
+
+                calculateFrameScore(frameIndex) {
+                    const throws = this.frames[frameIndex].throws;
+
+                    if (frameIndex === 9) {
+                        // 10th frame special rules
+                        return this.calculate10thFrameScore(throws);
+                    }
+
+                    const throw1 = this.parseThrow(throws[0]);
+                    const throw2 = this.parseThrow(throws[1]);
+
+                    if (throw1 === 10) {
+                        // Strike
+                        return 10 + this.getNextTwoThrows(frameIndex);
+                    }
+
+                    if (throw2 === "/" || throw1 + throw2 === 10) {
+                        // Spare
+                        return 10 + this.getNextOneThrow(frameIndex);
+                    }
+
+                    return throw1 + throw2;
+                }
+
+                calculate10thFrameScore(throws) {
+                    let score = 0;
+                    for (let i = 0; i < throws.length && i < 3; i++) {
+                        const throwValue = throws[i];
+                        if (throwValue === "/") {
+                            score = 10;
+                        } else {
+                            const parsed = this.parseThrow(throwValue);
+                            if (parsed !== "/") {
+                                score += parsed;
+                            }
+                        }
+                    }
+                    return score;
+                }
+
+                getNextTwoThrows(frameIndex) {
+                    if (frameIndex >= 9) return 0;
+
+                    const nextFrame = this.frames[frameIndex + 1];
+                    const throw1 = this.parseThrow(nextFrame.throws[0]);
+
+                    if (throw1 === 10) {
+                        // Next throw is strike
+                        if (frameIndex === 8) {
+                            // 9th frame strike, look at 10th frame
+                            const tenthFrame = this.frames[9];
+                            const throw2 = this.parseThrow(
+                                tenthFrame.throws[1],
+                            );
+                            return (
+                                10 +
+                                (throw2 === "/"
+                                    ? 10 - this.parseThrow(tenthFrame.throws[0])
+                                    : throw2)
+                            );
+                        } else {
+                            // Look at frame after next
+                            const throw2 = this.parseThrow(
+                                this.frames[frameIndex + 2].throws[0],
+                            );
+                            return 10 + throw2;
+                        }
+                    } else {
+                        const throw2 = this.parseThrow(nextFrame.throws[1]);
+                        if (throw2 === "/") {
+                            return 10;
+                        }
+                        return throw1 + throw2;
+                    }
+                }
+
+                getNextOneThrow(frameIndex) {
+                    if (frameIndex >= 9) return 0;
+
+                    const nextFrame = this.frames[frameIndex + 1];
+                    const nextThrow = this.parseThrow(nextFrame.throws[0]);
+                    return nextThrow;
+                }
+
+                updateDisplay() {
+                    const container = document.querySelector(
+                        `[data-series-id="${this.id}"]`,
+                    );
+
+                    // Update input values
+                    const inputs =
+                        container.querySelectorAll("input[data-frame]");
+                    inputs.forEach((input) => {
+                        const frame = parseInt(input.dataset.frame) - 1;
+                        const throwIndex = parseInt(input.dataset.throw) - 1;
+                        const value =
+                            this.frames[frame].throws[throwIndex] || "";
+                        if (value == "10") {
+                            input.value = "X";
+                        } else if (value == "0") {
+                            input.value = "-";
+                        } else {
+                            input.value = value;
+                        }
+                    });
+
+                    // Update frame scores
+                    for (let i = 0; i < 10; i++) {
+                        const scoreElement = container.querySelector(
+                            `[data-score="${i + 1}"]`,
+                        );
+                        scoreElement.textContent = this.frames[i].score || 0;
+
+                        // Visual feedback for strikes and spares
+                        const frameElement = container.querySelector(
+                            `[data-frame="${i + 1}"]`,
+                        );
+                        frameElement.classList.remove("strike", "spare");
+
+                        if (i < 9) {
+                            const throw1 = this.parseThrow(
+                                this.frames[i].throws[0],
+                            );
+                            const throw2 = this.parseThrow(
+                                this.frames[i].throws[1],
+                            );
+
+                            if (throw1 === 10) {
+                                frameElement.classList.add("strike");
+                            } else if (
+                                throw2 === "/" ||
+                                throw1 + throw2 === 10
+                            ) {
+                                frameElement.classList.add("spare");
+                            }
+                        }
+                    }
+
+                    // Update total score
+                    const totalScore = this.frames[9].score || 0;
+                    const totalScoreElement =
+                        container.querySelector("[data-total-score]");
+                    totalScoreElement.textContent = totalScore;
+                }
+
+                static saveScore(seriesId) {
+                    const container = document.querySelector(
+                        `[data-series-id="${seriesId}"]`,
+                    );
+                    const playerId =
+                        container.querySelector("[data-player-id]").value;
+                    const frames = Array.from(
+                        container.querySelectorAll(".frame"),
+                    ).map((frame) => {
+                        return Array.from(
+                            frame.querySelectorAll("input[data-throw]"),
+                        ).map((input) => input.value);
+                    });
+                    const totalScore = parseInt(
+                        container.querySelector("[data-total-score]")
+                            .textContent,
+                    );
+
+                    const scoreData = {
+                        player_id: playerId,
+                        frames: JSON.stringify(frames),
+                        total_score: totalScore,
+                    };
+
+                    fetch("/api/scores", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(scoreData),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            alert(`Score saved! ID: ${data.id}`);
+                        })
+                        .catch((error) => {
+                            console.error("Error saving score:", error);
+                            alert(
+                                "Failed to save score. Make sure the server is running.",
+                            );
+                        });
+                }
+
+                static loadScores() {
+                    fetch("/api/scores")
+                        .then((response) => response.json())
+                        .then((scores) => {
+                            BowlingSeries.displayScores(scores);
+                        })
+                        .catch((error) => {
+                            console.error("Error loading scores:", error);
+                            alert(
+                                "Failed to load scores. Make sure the server is running.",
+                            );
+                        });
+                }
+
+                static displayScores(scores) {
+                    const scoresContainer =
+                        document.getElementById("scoresContainer");
+                    const scoresList = document.getElementById("scoresList");
+
+                    scoresContainer.innerHTML = "";
+
+                    if (scores == null || scores.length === 0) {
+                        scoresContainer.innerHTML =
+                            "<p>No saved scores found.</p>";
+                    } else {
+                        scores.forEach((score) => {
+                            const scoreItem = document.createElement("div");
+                            scoreItem.className = "score-item";
+
+                            const date = new Date(
+                                score.timestamp,
+                            ).toLocaleString();
+
+                            scoreItem.innerHTML = `
+                            <div class="score-info">
+                                <strong>${score.player_id}</strong> - Score: ${score.total_score}<br>
+                                <small>${date}</small>
+                            </div>
+                            <div class="score-actions">
+                                <button class="danger" onclick="BowlingSeries.deleteScore(${score.id})">Delete</button>
+                            </div>
+                        `;
+
+                            scoresContainer.appendChild(scoreItem);
+                        });
+                    }
+
+                    scoresList.style.display = "block";
+                }
+
+                static deleteScore(id) {
+                    if (
+                        confirm("Are you sure you want to delete this score?")
+                    ) {
+                        fetch(`/api/scores/${id}`, {
+                            method: "DELETE",
+                        })
+                            .then((response) => response.json())
+                            .then((data) => {
+                                alert("Score deleted successfully!");
+                                BowlingSeries.loadScores(); // Refresh the list
+                            })
+                            .catch((error) => {
+                                console.error("Error deleting score:", error);
+                                alert("Failed to delete score.");
+                            });
+                    }
+                }
+            }
+
+            let seriesCounter = 0;
+
+            document
+                .getElementById("addSeries")
+                .addEventListener("click", () => {
+                    seriesCounter++;
+                    new BowlingSeries(seriesCounter);
+                });
+
+            document
+                .getElementById("loadScores")
+                .addEventListener("click", () => {
+                    BowlingSeries.loadScores();
+                });
+
+            document.addEventListener("DOMContentLoaded", () => {
+                document.getElementById("addSeries").click(); // Add initial series
+            });
+        </script>
+    </body>
+</html>
