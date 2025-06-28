@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <title>Bowling Score Calculator</title>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
@@ -196,6 +197,13 @@
             .score-actions {
                 flex-shrink: 0;
             }
+            .chart-container {
+              margin-top: 2rem;
+              background: white;
+              padding: 1rem;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
         </style>
     </head>
     <body>
@@ -208,6 +216,10 @@
         <div class="scores-list" id="scoresList" style="display: none">
             <h3>Saved Scores</h3>
             <div id="scoresContainer"></div>
+        </div>
+        <div class="chart-container">
+          <h3>Player Averages</h3>
+          <canvas id="averageChart"></canvas>
         </div>
         <div class="instructions">
             <h3>How to Use:</h3>
@@ -687,6 +699,56 @@
             document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("addSeries").click(); // Add initial series
             });
+            document.addEventListener('DOMContentLoaded', async () => {
+              try {
+                const response = await fetch('/api/player-averages');
+                const averages = await response.json();
+                
+                if (averages.length === 0) {
+                  return;
+                }
+                
+                const ctx = document.getElementById('averageChart').getContext('2d');
+                new Chart(ctx, {
+                  type: 'bar',
+                  data: {
+                    labels: averages.map(a => a.player_id),
+                    datasets: [{
+                      label: 'Average Score',
+                      data: averages.map(a => a.average_score),
+                      backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)'
+                      ],
+                      borderWidth: 1
+                    }]
+                  },
+                  options: {
+                    responsive: true,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: 'Average Score'
+                        }
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: 'Players'
+                        }
+                      }
+                    }
+                  }
+                });
+              } catch (error) {
+                console.error('Error loading player averages:', error);
+              }
+            });
+
         </script>
     </body>
 </html>

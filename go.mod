@@ -1,4 +1,4 @@
-module bowlscore
+module github.com/mikkolundgren/bowlscore
 
 go 1.21
 

@@ -47,6 +47,7 @@ func main() {
 	r.HandleFunc("/api/scores", saveScore).Methods("POST")
 	r.HandleFunc("/api/scores", listScores).Methods("GET")
 	r.HandleFunc("/api/scores/{id}", deleteScore).Methods("DELETE")
+	r.HandleFunc("/api/player-averages", getPlayerAverages).Methods("GET")
 
 	// Serve static files
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
@@ -110,7 +111,7 @@ func saveScore(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := result.LastInsertId()
 
-	response := map[string]interface{}{
+	response := map[string]any {
 		"id":      id,
 		"message": "Score saved successfully",
 	}
@@ -177,3 +178,42 @@ func deleteScore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func getPlayerAverages(w http.ResponseWriter, r *http.Request) {
+	query := `
+	SELECT player_id, 
+		   AVG(total_score) as average_score,
+		   COUNT(*) as games_played
+	FROM bowling_scores
+	GROUP BY player_id
+	ORDER BY average_score DESC`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Printf("Error querying player averages: %v", err)
+		http.Error(w, "Failed to retrieve player averages", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type PlayerAverage struct {
+		PlayerID    string  `json:"player_id"`
+		Average     float64 `json:"average_score"`
+		GamesPlayed int     `json:"games_played"`
+	}
+	
+	var averages []PlayerAverage
+	for rows.Next() {
+		var avg PlayerAverage
+		err := rows.Scan(&avg.PlayerID, &avg.Average, &avg.GamesPlayed)
+		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+			continue
+		}
+		averages = append(averages, avg)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(averages)
+}
+
