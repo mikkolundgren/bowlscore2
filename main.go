@@ -47,7 +47,7 @@ func main() {
 	r.HandleFunc("/api/scores", saveScore).Methods("POST")
 	r.HandleFunc("/api/scores", listScores).Methods("GET")
 	r.HandleFunc("/api/scores/{id}", deleteScore).Methods("DELETE")
-	r.HandleFunc("/api/player-averages", getPlayerAverages).Methods("GET")
+	r.HandleFunc("/api/player-progress", getPlayerProgress).Methods("GET")
 
 	// Serve static files
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
@@ -111,7 +111,7 @@ func saveScore(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := result.LastInsertId()
 
-	response := map[string]any {
+	response := map[string]any{
 		"id":      id,
 		"message": "Score saved successfully",
 	}
@@ -179,41 +179,53 @@ func deleteScore(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func getPlayerAverages(w http.ResponseWriter, r *http.Request) {
-	query := `
-	SELECT player_id, 
-		   AVG(total_score) as average_score,
-		   COUNT(*) as games_played
-	FROM bowling_scores
-	GROUP BY player_id
-	ORDER BY average_score DESC`
+func getPlayerProgress(w http.ResponseWriter, r *http.Request) {
+	playerID := r.URL.Query().Get("player_id")
+	if playerID == "" {
+		http.Error(w, "Missing player_id parameter", http.StatusBadRequest)
+		return
+	}
 
-	rows, err := db.Query(query)
+	query := `
+    SELECT DATE(timestamp) as date,
+           AVG(total_score) as average_score,
+           COUNT(*) as games_played
+    FROM bowling_scores
+    WHERE player_id = ?
+    GROUP BY DATE(timestamp)
+    ORDER BY date`
+
+	rows, err := db.Query(query, playerID)
 	if err != nil {
-		log.Printf("Error querying player averages: %v", err)
-		http.Error(w, "Failed to retrieve player averages", http.StatusInternalServerError)
+		log.Printf("Error querying player progress: %v", err)
+		http.Error(w, "Failed to retrieve player progress", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	type PlayerAverage struct {
-		PlayerID    string  `json:"player_id"`
-		Average     float64 `json:"average_score"`
+	type DailyProgress struct {
+		Date        string  `json:"date"`
+		Average     float64 `json:"average"`
 		GamesPlayed int     `json:"games_played"`
 	}
-	
-	var averages []PlayerAverage
+
+	var progress []DailyProgress
 	for rows.Next() {
-		var avg PlayerAverage
-		err := rows.Scan(&avg.PlayerID, &avg.Average, &avg.GamesPlayed)
+		var p DailyProgress
+		err := rows.Scan(&p.Date, &p.Average, &p.GamesPlayed)
 		if err != nil {
 			log.Printf("Error scanning row: %v", err)
 			continue
 		}
-		averages = append(averages, avg)
+		progress = append(progress, p)
+	}
+
+	if len(progress) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"message": "No data for player"})
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(averages)
+	json.NewEncoder(w).Encode(progress)
 }
-

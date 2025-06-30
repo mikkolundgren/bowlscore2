@@ -198,11 +198,27 @@
                 flex-shrink: 0;
             }
             .chart-container {
-              margin-top: 2rem;
-              background: white;
-              padding: 1rem;
-              border-radius: 8px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin-top: 2rem;
+                background: white;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .progress-section {
+                margin-top: 2rem;
+                background: white;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .player-selector {
+                margin-bottom: 1rem;
+            }
+            
+            #progressChart {
+                height: 300px;
+                width: 100%;
             }
         </style>
     </head>
@@ -217,9 +233,15 @@
             <h3>Saved Scores</h3>
             <div id="scoresContainer"></div>
         </div>
-        <div class="chart-container">
-          <h3>Player Averages</h3>
-          <canvas id="averageChart"></canvas>
+        <div class="progress-section">
+            <h3>Player Progress</h3>
+            <div class="player-selector">
+                <label for="playerSelect">Select Player:</label>
+                <select id="playerSelect"></select>
+            </div>
+            <div id="progressChartContainer">
+                <canvas id="progressChart"></canvas>
+            </div>
         </div>
         <div class="instructions">
             <h3>How to Use:</h3>
@@ -681,6 +703,118 @@
                 }
             }
 
+            class ProgressChart {
+                constructor() {
+                    this.chart = null;
+                    this.playerSelect = document.getElementById('playerSelect');
+                    this.chartContainer = document.getElementById('progressChartContainer');
+                    this.canvas = document.getElementById('progressChart');
+                    this.ctx = this.canvas.getContext('2d');
+                    
+                    this.init();
+                }
+                
+                async init() {
+                    await this.loadPlayers();
+                    this.playerSelect.addEventListener('change', () => this.updateChart());
+                    this.updateChart();
+                }
+                
+                async loadPlayers() {
+                    try {
+                        const response = await fetch('/api/scores?limit=1');
+                        if (!response.ok) return;
+                        
+                        const scores = await response.json();
+                        const players = [...new Set(scores.map(s => s.player_id))];
+                        
+                        this.playerSelect.innerHTML = players.map(p => 
+                            `<option value="${p}">${p}</option>`
+                        ).join('');
+                    } catch (error) {
+                        console.error('Error loading players:', error);
+                    }
+                }
+                
+                async updateChart() {
+                    const playerId = this.playerSelect.value;
+                    if (!playerId) return;
+                    
+                    try {
+                        const response = await fetch(`/api/player-progress?player_id=${playerId}`);
+                        if (!response.ok) throw new Error('Failed to fetch progress');
+                        
+                        const progressData = await response.json();
+                        this.renderChart(progressData);
+                    } catch (error) {
+                        this.chartContainer.innerHTML = `<div class="error">${error.message}</div>`;
+                        console.error('Error updating chart:', error);
+                    }
+                }
+                
+                renderChart(progressData) {
+                    if (this.chart) this.chart.destroy();
+                    
+                    if (!progressData || progressData.length === 0) {
+                        this.chartContainer.innerHTML = '<p>No progress data available</p>';
+                        return;
+                    }
+                    
+                    const labels = progressData.map(d => d.date);
+                    const data = progressData.map(d => d.average);
+                    
+                    this.chart = new Chart(this.ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Average Score',
+                                data: data,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                pointRadius: 5,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        afterLabel: (context) => {
+                                            const index = context.dataIndex;
+                                            return `Games: ${progressData[index].games_played}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    title: {
+                                        display: true,
+                                        text: 'Average Score'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Initialize the chart when DOM is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                new ProgressChart();
+            });
+
+            
             let seriesCounter = 0;
 
             document
@@ -699,56 +833,6 @@
             document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("addSeries").click(); // Add initial series
             });
-            document.addEventListener('DOMContentLoaded', async () => {
-              try {
-                const response = await fetch('/api/player-averages');
-                const averages = await response.json();
-                
-                if (averages.length === 0) {
-                  return;
-                }
-                
-                const ctx = document.getElementById('averageChart').getContext('2d');
-                new Chart(ctx, {
-                  type: 'bar',
-                  data: {
-                    labels: averages.map(a => a.player_id),
-                    datasets: [{
-                      label: 'Average Score',
-                      data: averages.map(a => a.average_score),
-                      backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)'
-                      ],
-                      borderWidth: 1
-                    }]
-                  },
-                  options: {
-                    responsive: true,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        title: {
-                          display: true,
-                          text: 'Average Score'
-                        }
-                      },
-                      x: {
-                        title: {
-                          display: true,
-                          text: 'Players'
-                        }
-                      }
-                    }
-                  }
-                });
-              } catch (error) {
-                console.error('Error loading player averages:', error);
-              }
-            });
-
         </script>
     </body>
 </html>
