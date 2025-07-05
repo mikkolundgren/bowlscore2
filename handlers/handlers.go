@@ -23,7 +23,10 @@ func SaveScore(w http.ResponseWriter, r *http.Request) {
 	INSERT INTO bowling_scores (player_id, frames, total_score, timestamp)
 	VALUES (?, ?, ?, ?)`
 
-	result, err := db.Db.Exec(query, scoreReq.PlayerID, scoreReq.Frames, scoreReq.TotalScore, time.Now())
+	now := time.Now()
+	dateTime := now.Format("2006-01-02 15:04:05")
+	
+	result, err := db.Db.Exec(query, scoreReq.PlayerID, scoreReq.Frames, scoreReq.TotalScore, dateTime)
 	if err != nil {
 		log.Printf("Error saving score: %v", err)
 		http.Error(w, "Failed to save score", http.StatusInternalServerError)
@@ -110,7 +113,7 @@ func GetPlayerProgress(w http.ResponseWriter, r *http.Request) {
 	query := `
     SELECT DATE(timestamp) as date,
            AVG(total_score) as average_score,
-           COUNT(*) as games_played,
+           COUNT(*) as games_played
     FROM bowling_scores
     WHERE player_id = ?
     GROUP BY DATE(timestamp)

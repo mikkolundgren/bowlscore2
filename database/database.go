@@ -3,24 +3,18 @@ package database
 import (
 	"database/sql"
 	"log"
-	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 var Db *sql.DB
 
-func InitDB() {
+func InitDB(dbPath string) {
 	var err error
-	dbPath, isPresent := os.LookupEnv("DB_PATH")
-	if !isPresent {
-		dbPath = "./bowling_scores.db"
-	}
-	Db, err = sql.Open("sqlite3", dbPath)
+	Db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatal(err)
-	}
-
+	}	
 	createTable()
 }
 

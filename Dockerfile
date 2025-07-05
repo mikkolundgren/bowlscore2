@@ -1,19 +1,18 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM --platform=linux/amd64 golang:1.23-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN go mod init bowlscore && go mod tidy
-RUN go build -o bowlscore .
+
+RUN GOOS=linux GOARCH=amd64 go build -o bowlscore .
 
 # Runtime stage
-FROM alpine:latest
+FROM --platform=linux/amd64 alpine:latest
 RUN apk --no-cache add ca-certificates libc6-compat
 WORKDIR /app
 
 # Copy binary and assets
 COPY --from=builder /app/bowlscore .
 COPY --from=builder /app/static ./static
-COPY --from=builder /app/certs ./certs
 
 # Create directory for database file
 RUN mkdir data
@@ -22,10 +21,10 @@ RUN mkdir data
 ENV DB_PATH=/app/data/bowling_scores.db
 
 # Expose HTTPS port
-EXPOSE 8443
+EXPOSE 8080
 
 # Run the application
-CMD ["./bowlscore"]
+CMD ["./app/bowlscore"]
 
 #To build and run:
 #docker build -t bowlscore .
