@@ -24,7 +24,7 @@ ENV DB_PATH=/app/data/bowling_scores.db
 EXPOSE 8080
 
 # Run the application
-CMD ["./app/bowlscore"]
+CMD ["/app/bowlscore"]
 
 #To build and run:
 #docker build -t bowlscore .
