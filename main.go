@@ -11,14 +11,15 @@ import (
 
 func main() {
 	// Initialize database
+	log.Println("Starting the application.....")
 	dbPath, isPresent := os.LookupEnv("DB_PATH")
 	if !isPresent {
-		log.Println("No DB_PATH env. Using defaults...")	
+		log.Println("No DB_PATH env. Using defaults...")
 		dbPath = "./bowling_scores.db"
 	}
 	log.Printf("Initializing DB with path: %s", dbPath)
 	db.InitDB(dbPath)
-	
+
 	defer db.Close()
 
 	// Setup routes
