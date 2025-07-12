@@ -243,37 +243,7 @@
                 <canvas id="progressChart"></canvas>
             </div>
         </div>
-        <div class="instructions">
-            <h3>How to Use:</h3>
-            <ul>
-                <li>
-                    <strong>Enter pins knocked down:</strong> Type numbers 0-10
-                    for each throw
-                </li>
-                <li>
-                    <strong>Strike:</strong> Enter "X" or "10" in the first
-                    throw of a frame
-                </li>
-                <li>
-                    <strong>Spare:</strong> Enter "/" in the second throw when
-                    total pins = 10
-                </li>
-                <li><strong>Gutter ball:</strong> Enter "0" or "-"</li>
-                <li>
-                    <strong>Save Score:</strong> Click "Save Score" to store
-                    each series in the database separately
-                </li>
-                <li>
-                    <strong>Load Scores:</strong> Click "Load Saved Scores" to
-                    view all stored games
-                </li>
-                <li>
-                    <strong>Delete Score:</strong> Delete scores directly from
-                    the list
-                </li>
-            </ul>
-        </div>
-
+        
         <script>
             class BowlingSeries {
                 constructor(id) {
@@ -281,7 +251,7 @@
                     this.frames = Array(10)
                         .fill()
                         .map(() => ({ throws: [], score: 0 }));
-                    this.playerId = `Player${id}`;
+                    this.playerId = `mikko`;
                     this.createSeriesElement();
                 }
 
