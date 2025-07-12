@@ -7,7 +7,7 @@ RUN GOOS=linux GOARCH=amd64 go build -o bowlscore .
 
 # Runtime stage
 FROM --platform=linux/amd64 alpine:latest
-RUN apk --no-cache add ca-certificates libc6-compat
+RUN apk --no-cache add ca-certificates libc6-compat cifs-utils
 WORKDIR /app
 
 # Copy binary and assets
