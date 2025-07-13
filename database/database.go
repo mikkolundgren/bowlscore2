@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"log"
+	"strings"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -11,14 +13,9 @@ var Db *sql.DB
 var dbPath string
 
 func InitDB(dbPathParam string) {
-	var err error
-	defer Close()
 	dbPath = dbPathParam
-	Db, err = sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("error initializing db ", dbPath, err)
-	}	
-	createTable()
+	createTable(dbPath)
+	
 }
 
 func Open() {
@@ -34,7 +31,10 @@ func Close() {
 	Db.Close()
 }
 
-func createTable() {
+func createTable(dbPath string)  {
+	
+	var err error
+	defer Db.Close()
 	
 	log.Printf("creating table...")
 	query := `
@@ -45,9 +45,17 @@ func createTable() {
 		total_score INTEGER NOT NULL,
 		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
-
-	_, err := Db.Exec(query)
-	if err != nil {
-		log.Println("error creating table", err)
+	Db, err = sql.Open("sqlite", dbPath)
+	i := 0
+	for i < 5 {
+		_, err = Db.Exec(query)
+		if err != nil {
+			log.Println("error creating table", err)
+			if strings.Contains(err.Error(), "SQLITE_BUSY") {
+				log.Println("retrying table creation...")
+				time.Sleep(3 * time.Second)
+			}
+			i = i + 1 
+		}
 	}
 }
