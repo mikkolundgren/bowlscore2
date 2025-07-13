@@ -12,6 +12,7 @@ var dbPath string
 
 func InitDB(dbPathParam string) {
 	var err error
+	defer Close()
 	dbPath = dbPathParam
 	Db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -34,8 +35,6 @@ func Close() {
 }
 
 func createTable() {
-	
-	defer Close()
 	
 	query := `
 	CREATE TABLE IF NOT EXISTS bowling_scores (
