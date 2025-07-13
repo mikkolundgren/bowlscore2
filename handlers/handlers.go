@@ -13,6 +13,10 @@ import (
 )
 
 func SaveScore(w http.ResponseWriter, r *http.Request) {
+	db.Open()
+	
+	defer db.Close()
+	
 	var scoreReq models.ScoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&scoreReq); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -45,6 +49,8 @@ func SaveScore(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListScores(w http.ResponseWriter, r *http.Request) {
+	db.Open()
+	defer db.Close()
 	query := `
 	SELECT id, player_id, frames, total_score, timestamp
 	FROM bowling_scores
@@ -74,6 +80,9 @@ func ListScores(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteScore(w http.ResponseWriter, r *http.Request) {
+	db.Open()
+	defer db.Close()
+	
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -104,6 +113,8 @@ func DeleteScore(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPlayerProgress(w http.ResponseWriter, r *http.Request) {
+	db.Open()
+	defer db.Close()
 	playerID := r.URL.Query().Get("player_id")
 	if playerID == "" {
 		http.Error(w, "Missing player_id parameter", http.StatusBadRequest)

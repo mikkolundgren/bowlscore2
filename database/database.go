@@ -8,9 +8,11 @@ import (
 )
 
 var Db *sql.DB
+var dbPath string
 
-func InitDB(dbPath string) {
+func InitDB(dbPathParam string) {
 	var err error
+	dbPath = dbPathParam
 	Db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatal(err)
@@ -18,11 +20,23 @@ func InitDB(dbPath string) {
 	createTable()
 }
 
+func Open() {
+	
+	var err error
+	Db, err = sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}	
+}
+
 func Close() {
 	Db.Close()
 }
 
 func createTable() {
+	
+	defer Close()
+	
 	query := `
 	CREATE TABLE IF NOT EXISTS bowling_scores (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
