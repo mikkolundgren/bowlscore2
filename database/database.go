@@ -34,7 +34,6 @@ func Close() {
 func createTable(dbPath string)  {
 	
 	var err error
-	defer Db.Close()
 	
 	log.Printf("creating table...")
 	query := `
@@ -56,6 +55,9 @@ func createTable(dbPath string)  {
 				time.Sleep(3 * time.Second)
 			}
 			i = i + 1 
+		} else {
+			break
 		}
 	}
+	defer Db.Close()
 }
