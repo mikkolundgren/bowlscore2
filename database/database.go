@@ -16,7 +16,7 @@ func InitDB(dbPathParam string) {
 	dbPath = dbPathParam
 	Db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("error initializing db ", dbPath, err)
 	}	
 	createTable()
 }
@@ -26,7 +26,7 @@ func Open() {
 	var err error
 	Db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("error opening db ", dbPath, err)
 	}	
 }
 
@@ -36,6 +36,7 @@ func Close() {
 
 func createTable() {
 	
+	log.Printf("creating table...")
 	query := `
 	CREATE TABLE IF NOT EXISTS bowling_scores (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,6 +48,6 @@ func createTable() {
 
 	_, err := Db.Exec(query)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("error creating table", err)
 	}
 }
