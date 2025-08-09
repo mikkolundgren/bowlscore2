@@ -1,13 +1,12 @@
 package models
 
-import "time"
 
 type BowlingScore struct {
 	ID         int       `json:"id"`
 	PlayerID   string    `json:"player_id"`
 	Frames     string    `json:"frames"` // JSON string of frame data
 	TotalScore int       `json:"total_score"`
-	Timestamp  time.Time `json:"timestamp"`
+	Timestamp  string	 `json:"timestamp"`
 }
 
 type ScoreRequest struct {

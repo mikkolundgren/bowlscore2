@@ -15,12 +15,12 @@ func main() {
 	dbPath, isPresent := os.LookupEnv("DB_PATH")
 	if !isPresent {
 		log.Println("No DB_PATH env. Using defaults...")
-		dbPath = "./bowling_scores.db"
+		dbPath = "./scores.json"
+		os.Setenv("DB_PATH", dbPath)
 	}
 	log.Printf("Initializing DB with path: %s", dbPath)
-	db.InitDB(dbPath)
-
-	defer db.Close()
+	// db.InitDB(dbPath)
+	db.Init(dbPath)
 
 	// Setup routes
 	r := routes.SetupRoutes()

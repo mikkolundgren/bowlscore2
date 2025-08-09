@@ -18,7 +18,7 @@ COPY --from=builder /app/static ./static
 RUN mkdir data
 
 # Set environment variables
-ENV DB_PATH=/app/data/bowling_scores.db
+ENV DB_PATH=/app/data/scores.json
 
 # Expose HTTPS port
 EXPOSE 8080
